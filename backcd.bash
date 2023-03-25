@@ -2,15 +2,15 @@
  
  #
  # How to run
- # $B<+J,$N%G%#%l%/%H%j$K(BBacksetHistory $B$KBeF~$9$k%U%!%$%k$rMQ0U$9$k!#(B
- # '10back set'   $B$G%+%l%s%H$rJ]B8!#(B
- # '10back' or '10back (0 ~ 9)'$B!!$G9%$-$J%G%#%l%/%H%j$K(Bcd $B!#(B 
- # '10back set (0 ~ 9)'$B!!$G$=$N?t;z$K%+%l%s%H(Bset $B!#(B
- # 'q' or 'Ctrl-C'$B!!$G%k!<%W$rH4$1$k!#(B 
- # Shell $B$,(B Bash $B$G$J$$$HF0$+$J$$!#(B
+ # 自分のディレクトリにBacksetHistory に代入するファイルを用意する。
+ # '10back set'   でカレントを保存。
+ # '10back' or '10back (0 ~ 9)'　で好きなディレクトリにcd 。 
+ # '10back set (0 ~ 9)'　でその数字にカレントset 。
+ # 'q' or 'Ctrl-C'　でループを抜ける。 
+ # Shell が Bash でないと動かない。
  #
  
- BacksetHistory='/home/kato/99.storage/backset_history'   #$BJQ?t$KBeF~$9$k$H$-(B"~" $BEy$OE83+$5$l$J$$$?$a%U%k%Q%9$G=q$/I,MW$"$j!#(B
+ BacksetHistory='/home/kato/99.storage/backset_history'   #変数に代入するとき"~" 等は展開されないためフルパスで書く必要あり。
  DirOption=(`tail "$BacksetHistory"`) 
  ColorArray=('39' '51' '46' '154' '227' '208' '196' '207' '81' '154')
 
@@ -36,7 +36,7 @@ function HistoryReplace () {
   numline1=(`wc -l "$BacksetHistory"`)
   numline2=$(( $numline1 - $1 ))
   sed -i -e "${numline2}s:${originalDIR}:${newDIR}:g" "$BacksetHistory" 
-  #$BCV49$7$?$$J8;zNs$K(B"/"$B$,F~$C$F$$$k$?$a(Bsed $B$N6h@Z$jJ8;z$r(B":"$B$K$7$?!#(B
+  #置換したい文字列に"/"が入っているためsed の区切り文字を":"にした。
   echo "______________________________________"
   echo
   echo " Current directory is set to Index $1 "
@@ -50,7 +50,7 @@ function HistoryReplace () {
    ERROR1
    echo
  elif (( $# == 2 )) ; then 
-   if [[ $1 == "set" && $2 =~ ^[0-9]+$ ]] ; then   #"[]" $B$h$j(B"[[]]" $B$N$[$&$,4JC1$K>r7o$r7k9g$G$-$k!#(B
+   if [[ $1 == "set" && $2 =~ ^[0-9]+$ ]] ; then   #"[]" より"[[]]" のほうが簡単に条件を結合できる。
      if (( $2 < 10 )) ; then
        HistoryReplace $2     
      else
@@ -100,14 +100,14 @@ function HistoryReplace () {
    echo
   
   
-   while : ; do  #$BL58B%k!<%W!#$&$^$/$$$C$?$H$-$O(Bbreak $B$7$F!"$&$^$/$$$+$J$$$H$-$O(Berror $B$r$O$$$F$b$&(B1$B=d$9$k!#(B 
-     read -a DIRNUM   # "-a" $B$OG[Ns$H$7$FFI$_9~$`%*%W%7%g%s(B
+   while : ; do  #無限ループ。うまくいったときはbreak して、うまくいかないときはerror をはいてもう1巡する。 
+     read -a DIRNUM   # "-a" は配列として読み込むオプション
      if (( ${#DIRNUM[*]} > 2 )) ; then
        ERROR1
-       continue    #continue $B$G%k!<%W$N=i$a$KLa$k!#(B
+       continue    #continue でループの初めに戻る。
      elif (( ${#DIRNUM[*]} == 2 )) ; then
-       if [[ ${DIRNUM[0]} == set && ${DIRNUM[1]} =~ ^[0-9]+$ ]] ; then   #$B$3$3$G$N>r7o$N=gHV$OL5$$G[Ns$NMWAG$K%"%/%;%9$5$;$J$$$?$a$KBg@Z!#(B
-         if (( ${DIRNUM[1]} < 10 )) ; then   #"(())"$B$G$O?tCM$NHf3S$,$G$-$k!#(B"[[]]"$B$G$OJ8;zNsHf3S$K$J$k!#(B   #"&&" $B$O:8$K$"$k>r7o$,??$N;~$N$_1&$N>r7o$K?J$`!#(B
+       if [[ ${DIRNUM[0]} == set && ${DIRNUM[1]} =~ ^[0-9]+$ ]] ; then   #ここでの条件の順番は無い配列の要素にアクセスさせないために大切。
+         if (( ${DIRNUM[1]} < 10 )) ; then   #"(())"では数値の比較ができる。"[[]]"では文字列比較になる。   #"&&" は左にある条件が真の時のみ右の条件に進む。
            HistoryReplace ${DIRNUM[1]}
            break
          else 
@@ -137,14 +137,14 @@ function HistoryReplace () {
          echo "____________________________________"
          echo
          break
-       elif [[ ${DIRNUM[0]} =~ ^[0-9]+$ && ${DIRNUM[0]} -lt 10 ]] ; then   #"[[]]" $B$NCf$G$O(B"<" $B$,J8;zNsHf3S$K$J$k$?$a!"(B"-lt" $B$r;H$C$F?tCMHf3S$K$9$k!#(B
+       elif [[ ${DIRNUM[0]} =~ ^[0-9]+$ && ${DIRNUM[0]} -lt 10 ]] ; then   #"[[]]" の中では"<" が文字列比較になるため、"-lt" を使って数値比較にする。
          cd ${DirOption[ $(( ${#DirOption[*]} - DIRNUM[0] - 1 )) ]} ; echo ; ls
          break
        else
          ERROR2
          continue
        fi
-     else   #$BMWAG?t%<%m$N>l9g(B
+     else   #要素数ゼロの場合
        ERROR2
      fi
    done
