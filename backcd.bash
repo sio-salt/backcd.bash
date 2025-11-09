@@ -10,7 +10,7 @@
 # Shell が Bash でないと動かない。
 #
 
-BacksetHistory='$HOME/00.repos/c.cli-tools/backcd.bash/backset_history' #変数に代入するとき"~" 等は展開されないためフルパスで書く必要あり。
+BacksetHistory='$HOME/00.repos/c.cli-tools/backcd.bash/nogit/backset_history' #変数に代入するとき"~" 等は展開されないためフルパスで書く必要あり。
 DirOption=($(tail "$BacksetHistory"))
 ColorArray=('39' '51' '46' '154' '227' '208' '196' '207' '81' '154')
 
